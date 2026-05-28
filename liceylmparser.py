@@ -248,8 +248,8 @@ def main():
     parser.add_argument("group_id", help="ID вашей группы")
     parser.add_argument("--cookies", "-c", dest="cookies_path", default="cookies.pkl",
                         help="Путь к файлу с cookies (по умолчанию cookies.pkl)")
-    parser.add_argument("--output", "-o", dest="output_dir", default="LiceyLMParserData",
-                        help="Папка для сохранения данных (по умолчанию LiceyLMParserData)")
+    parser.add_argument("--output", "-o", dest="output_dir", default="LMParserData",
+                        help="Папка для сохранения данных (по умолчанию LMParserData)")
 
     args = parser.parse_args()
     course_id = args.course_id
