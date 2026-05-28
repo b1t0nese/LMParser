@@ -3,7 +3,7 @@
 
 # Доступные решения
 
-1) [Основы промышленного программирования | Д25 (1461)](https://github.com/b1t0nese/LiceyLMParser/blob/main/LiceyLMParserData/1461)
+1) [Основы промышленного программирования | Д25 (1461)](https://github.com/b1t0nese/LMParser/tree/main/LMParserData/1461)
 
 ---
 # Как использовать
