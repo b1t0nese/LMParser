@@ -1,0 +1,4 @@
+undetected_chromedriver
+beautifulsoup4
+requests
+tqdm

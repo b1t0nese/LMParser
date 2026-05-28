@@ -1,0 +1,250 @@
+from PyQt6.QtWidgets import (QApplication, QMainWindow, QLabel, QPushButton, QTextEdit,
+                             QWidget, QVBoxLayout, QHBoxLayout, QSizePolicy)
+from PyQt6.QtGui import QPixmap, QFont, QKeyEvent
+from PyQt6.QtCore import Qt
+import qdarktheme
+import requests
+import sys
+import os
+
+
+GEOCODE_MAPS_API_KEY = "8013b162-6b42-4997-9691-77b7074026e0"
+
+def get_location_data(toponym: str, logging: bool=False):
+    api_url, params = "http://geocode-maps.yandex.ru/1.x/", {
+        "apikey": GEOCODE_MAPS_API_KEY, "geocode": toponym, "format": "json"}
+    response = requests.get(api_url, params)
+    if logging:
+        print(f"""\nRequest: {api_url}, {params}\nHttp статус: {response.status_code} ({
+            response.reason})\nResponse: {response.text}""")
+    if not response:
+        return
+    json_response = response.json()
+    feature_member = json_response["response"]["GeoObjectCollection"]["featureMember"]
+    if feature_member:
+        return feature_member[0]["GeoObject"]
+
+
+STATIC_MAPS_API_KEY = "f3a0fe3a-b07e-4840-a1da-06f18b2ddf13"
+
+class StaticMapAPI:
+    def __init__(self, start_longitude: float, start_latitude: float, map_scale: int=10, map_size: tuple=(650, 450),
+                 map_theme: str="light", move_step: float=0.001, logging: bool=True, map_file_path: str="map.png"):
+        self.logging = logging
+        self.map_file = map_file_path
+        self.longitude = start_longitude
+        self.latitude = start_latitude
+        self.map_scale = map_scale
+        self.map_theme = map_theme
+        self.map_size = map_size
+        self.move_step = move_step
+        self.points = []
+
+    def get_image(self):
+        api_url, params = "http://static-maps.yandex.ru/1.x/", {
+            "apikey": STATIC_MAPS_API_KEY, "ll": f"{self.longitude},{self.latitude}",
+            "z": self.map_scale, "size": f"{self.map_size[0]},{self.map_size[1]}", "l": "map",
+            "theme": self.map_theme, "pt": "~".join([",".join(map(str, pt)) for pt in self.points])}
+        response = requests.get(api_url, params)
+        if self.logging:
+            print(f"""\nRequest: {api_url}, {params}\nHttp статус: {response.status_code} ({
+                response.reason})\nResponse: {response.text if not response else "image"}""")
+        with open(self.map_file, "wb") as file:
+            file.write(response.content)
+
+    def calc_move(self):
+        step = self.move_step * max(1, (1.3 ** (23 - self.map_scale)))
+        return step if self.map_scale <= 14 else step / 2
+
+    def add_scale(self):
+        if self.map_scale < 21: self.map_scale += 1
+
+    def subt_scale(self):
+        if self.map_scale > 0: self.map_scale -= 1
+
+    def add_point(self, longitude: float, latitude: float, style: str="comma"):
+        self.points.append([longitude, latitude, style])
+    
+    def pop_point(self, index: int=-1):
+        if self.points and len(self.points) > index:
+            self.points.pop(index)
+
+    def move_to_location(self, toponym: str, map_scale: int=None):
+        loc_data = get_location_data(toponym, self.logging)
+        if not loc_data:
+            return
+        self.longitude, self.latitude = map(float, loc_data["Point"]["pos"].split(" "))
+        if not map_scale:
+            loc_kind = loc_data["metaDataProperty"]["GeocoderMetaData"]["kind"]
+            kind_to_scale = {
+                "entrance": 20,
+                "house": 19, "metro": 19, "railway_station": 19, "airport": 19, "station": 19, "route": 19,
+                "street": 15, "district": 15,
+                "hydro": 13, "vegetation": 13, "other": 13,
+                "locality": 11,
+                "area": 5, "province": 5, "country": 5,
+            }
+            self.map_scale = kind_to_scale.get(loc_kind, 10)
+        else:
+            self.map_scale = map_scale
+        return self.longitude, self.latitude
+
+    def close(self):
+        os.remove(self.map_file)
+
+
+class WindowUI(QMainWindow):
+    def initUI(self):
+        self.setWindowTitle('TheyMaps')
+        self.setFixedSize(650, 480)
+
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+        main_layout = QVBoxLayout(central_widget)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+
+        self.image = QLabel()
+        self.image.setStyleSheet("background-color: #f0f0f0;")
+        self.image.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.image.setText("Карта")
+        self.image.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.image.update_image = int()
+        main_layout.addWidget(self.image, 1)
+
+        bottom_panel = QWidget()
+        bottom_panel.setFixedHeight(50)
+        bottom_panel_layout = QHBoxLayout(bottom_panel)
+        bottom_panel_layout.setContentsMargins(5, 5, 5, 5)
+        bottom_panel_layout.setSpacing(5)
+
+        search_container = QWidget()
+        search_container.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        search_layout = QHBoxLayout(search_container)
+        search_layout.setContentsMargins(0, 0, 0, 0)
+        search_layout.setSpacing(2)
+
+        self.reset_button = QPushButton("Сброс", self)
+        self.reset_button.setFont(QFont("Arial", pointSize=14))
+        self.reset_button.setFixedHeight(35)
+        self.reset_button.setFixedWidth(self.reset_button.sizeHint().width())
+        search_layout.addWidget(self.reset_button)
+
+        self.search_entry = QTextEdit("Нижневартовск")
+        self.search_entry.setFont(QFont("Arial", pointSize=14))
+        self.search_entry.setFixedHeight(35)
+        self.search_entry.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.search_entry.installEventFilter(self)
+        search_layout.addWidget(self.search_entry)
+        
+        self.search_button = QPushButton("Поиск")
+        self.search_button.setFont(QFont("Arial", pointSize=14))
+        self.search_button.setFixedHeight(35)
+        self.search_button.setFixedWidth(self.search_button.sizeHint().width())
+        search_layout.addWidget(self.search_button)
+        
+        bottom_panel_layout.addWidget(search_container)
+
+        self.choice_theme = QPushButton("Светлая тема")
+        self.choice_theme.setFont(QFont("Arial", pointSize=14))
+        self.choice_theme.setFixedHeight(35)
+        self.choice_theme.setFixedWidth(self.choice_theme.sizeHint().width())
+        self.choice_theme.clicked.connect(self.change_theme)
+        bottom_panel_layout.addWidget(self.choice_theme)
+
+        main_layout.addWidget(bottom_panel)
+
+        self.theme = "light"
+        self.setStyleSheet(qdarktheme.load_stylesheet("light"))
+    
+    def change_theme(self) -> str:
+        if self.theme == "light":
+            self.theme = "dark"
+            self.choice_theme.setText("Чёрная тема")
+            self.setStyleSheet(qdarktheme.load_stylesheet("dark"))
+        elif self.theme == "dark":
+            self.theme = "light"
+            self.choice_theme.setText("Светлая тема")
+            self.setStyleSheet(qdarktheme.load_stylesheet("light"))
+        self.image.update_image()
+        return self.theme
+
+
+class TheyMaps(WindowUI):
+    def __init__(self, StaticMapAPI_args: tuple):
+        super().__init__()
+        self.static_map_api = StaticMapAPI(*StaticMapAPI_args)
+        self.startUI()
+
+    def startUI(self):
+        self.initUI()
+        self.image.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.image.mousePressEvent = self.image_focus
+        self.image.keyPressEvent = self.image_keyPressEvent
+        self.reset_button.clicked.connect(self.reset_search)
+        self.search_entry.orig_keyPressEvent = self.search_entry.keyPressEvent
+        self.search_entry.keyPressEvent = self.search_keyPressEvent
+        self.search_button.clicked.connect(self.on_search)
+        self.image.update_image = self.update_map
+        self.update_map()
+
+    def update_map(self):
+        self.static_map_api.map_theme = self.theme
+        self.static_map_api.get_image()
+        self.pixmap = QPixmap(self.static_map_api.map_file)
+        self.image.setPixmap(self.pixmap)
+        self.image.setFocus()
+
+    def image_keyPressEvent(self, event: QKeyEvent):
+        key = event.key()
+        if key == Qt.Key.Key_PageUp:
+            self.static_map_api.add_scale()
+        elif key == Qt.Key.Key_PageDown:
+            self.static_map_api.subt_scale()
+        elif key == Qt.Key.Key_Up:
+            self.static_map_api.latitude += self.static_map_api.calc_move() / 3
+        elif key == Qt.Key.Key_Down:
+            self.static_map_api.latitude -= self.static_map_api.calc_move() / 3
+        elif key == Qt.Key.Key_Left:
+            self.static_map_api.longitude -= self.static_map_api.calc_move()
+        elif key == Qt.Key.Key_Right:
+            self.static_map_api.longitude += self.static_map_api.calc_move()
+        else:
+            super().keyPressEvent(event)
+            return
+        self.update_map()
+        event.accept()
+
+    def search_keyPressEvent(self, event: QKeyEvent):
+        key = event.key()
+        if key in (Qt.Key.Key_Enter, Qt.Key.Key_Return):
+            self.on_search()
+        else:
+            self.search_entry.orig_keyPressEvent(event)
+            return
+        event.accept()
+
+    def reset_search(self, event: QKeyEvent):
+        self.static_map_api.pop_point()
+        self.search_entry.clear()
+        self.update_map()
+
+    def on_search(self):
+        longitude, latitude = self.static_map_api.move_to_location(self.search_entry.toPlainText())
+        self.static_map_api.add_point(longitude, latitude)
+        self.image_focus()
+        self.update_map()
+
+    def image_focus(self, event=None):
+        self.search_entry.clearFocus()
+        self.image.setFocus()
+
+    def closeEvent(self, event):
+        self.static_map_api.close()
+
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    window = TheyMaps((76.558902, 60.938545, 10))
+    window.show()
+    sys.exit(app.exec())

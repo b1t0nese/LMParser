@@ -1,0 +1,26 @@
+#header {
+	position: absolute;
+	left: 50vw;
+	translate: -50%;
+}
+
+#grid_for_photo {
+	position: absolute;
+	width: 70vw;
+	left: 15vw;
+	top: 15vh;
+	background-color: blanchedalmond;
+	border-radius: 4vw;
+	display: grid;
+	grid-template-columns: 1fr 1fr 1fr;
+	gap: 2vw;
+	padding: 2vw;
+	overflow-x: hidden;
+}
+
+.cell {
+	width: 22vw;
+	height: auto;
+	border-radius: 2.2vw;
+}
+

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1 id="header">Пейзажи Марса!</h1>
+    <div id="carouselExampleControls" class="carousel slide" data-bs-ride="carousel" style="position: relative; width: 70vw; height: 70vh; left: 15vw; top: 5vw">
+        <div class="carousel-inner">
+            <div class="carousel-indicators">
+                {% for obj in dirs %}
+                    <button type="button" data-bs-target="#carouselExampleControls" data-bs-slide-to="{{ loop.index0 }}" 
+                            {% if loop.first %}class="active" aria-current="true"{% endif %} 
+                            aria-label="Slide {{ loop.index0 }}"></button>
+                {% endfor %}
+            </div>
+
+            {% for obj in dirs %}
+                <div class="carousel-item {% if loop.first %}active{% endif %}">
+                    <img src="static/img/mars_desert/{{ obj }}" class="d-block w-100" style="height: 75vh;" alt="...">
+                </div>
+            {% endfor %}
+        </div>
+
+        <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleControls" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleControls" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+        </button>
+
+        <form method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="photo" style="font-size: 3vh;">Выберите файл</label>
+                <input type="file" class="form-control-file" id="photo" name="file">
+            </div>
+            <button type="submit" class="btn btn-primary" style="font-size: 3vh">Отправить</button>
+        </form>
+    </div>
+{% endblock %}
