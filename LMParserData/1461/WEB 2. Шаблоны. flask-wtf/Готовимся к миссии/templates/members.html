@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1 id="header">{{fullname}}</h1>
+    <img src="{{img_path}}" style="height: 60vh; width: auto; position: relative; left: 50vw; transform: translate(-50%, 0%); top: 10vh;" alt="...">
+    <h5 style="position: absolute; bottom: 10vh; left: 50vw; transform: translate(-50%, 0%);">{{roles}}</h5>
+{% endblock %}

@@ -1,0 +1,40 @@
+{
+    "members": [
+        {
+            "name": "Уилл",
+            "subname": "Смит",
+            "image_path": "static\\img\\members\\uil.webp",
+            "role": ["бортинженер", "специалист по внекорабельной деятельности"]
+        },
+        {
+            "name": "Илон",
+            "subname": "Маск",
+            "image_path": "static\\img\\members\\ilon.webp",
+            "role": ["главный конструктор", "пилот космического корабля"]
+        },
+        {
+            "name": "Арнольд",
+            "subname": "Шварцнегер",
+            "image_path": "static\\img\\members\\arnolt.webp",
+            "role": ["командир экипажа", "специалист по безопасности"]
+        },
+        {
+            "name": "Киану",
+            "subname": "Ривз",
+            "image_path": "static\\img\\members\\keanu.webp",
+            "role": ["пилот шаттла", "инструктор по невесомости"]
+        },
+        {
+            "name": "Леонардо",
+            "subname": "ДиКаприо",
+            "image_path": "static\\img\\members\\leonardo.webp",
+            "role": ["эколог Марса", "исследователь климата планет"]
+        },
+        {
+            "name": "Стивен",
+            "subname": "Хокинг",
+            "image_path": "static\\img\\members\\hawking.webp",
+            "role": ["главный теоретик", "специалист по черным дырам"]
+        }
+    ]
+}

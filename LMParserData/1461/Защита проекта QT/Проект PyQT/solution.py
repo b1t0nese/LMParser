@@ -1,4 +1,4 @@
-https://github.com/ArtemChikc/MacLearn
+https://github.com/b1t0nese/MacLearn
 ОБНОВЛЕНИЯ:
 -Изменён дизайн
 -доработан PEP8 стиль кода

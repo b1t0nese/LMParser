@@ -1,10 +1,7 @@
-from PyQt6.QtWidgets import (
-    QApplication, QMainWindow, QTableWidget,
-    QHBoxLayout, QTextEdit, QPushButton,
-    QVBoxLayout, QWidget, QStatusBar,
-    QMessageBox, QTableWidgetItem)
 import sqlite3
 import sys
+from PyQt6.QtWidgets import (QApplication, QMainWindow, QTableWidget, QHBoxLayout, QTableWidgetItem, 
+                             QTextEdit, QPushButton, QVBoxLayout, QWidget, QStatusBar, QMessageBox)
 
 
 class MyWidget(QMainWindow):
@@ -15,8 +12,8 @@ class MyWidget(QMainWindow):
         self.initUI()
 
     def initUI(self):
-        self.setWindowTitle("Генерация фильмов")
-        self.setGeometry(100, 100, 500, 600)
+        self.setWindowTitle("eq")
+        self.setGeometry(100, 100, 400, 400)
 
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -24,17 +21,13 @@ class MyWidget(QMainWindow):
         top_layout = QHBoxLayout()
 
         self.textEdit = QTextEdit()
-        self.textEdit.setMaximumHeight(100)
         top_layout.addWidget(self.textEdit, stretch=3)
 
         self.pushButton = QPushButton("Запуск")
-        self.pushButton.setFixedSize(self.pushButton.sizeHint())
         self.pushButton.clicked.connect(self.start)
         top_layout.addWidget(self.pushButton)
-        top_layout.addSpacing(10)
 
         self.saveButton = QPushButton("Изменить")
-        self.saveButton.setFixedSize(self.saveButton.sizeHint())
         self.saveButton.clicked.connect(self.edit)
         top_layout.addWidget(self.saveButton)
 
@@ -43,50 +36,60 @@ class MyWidget(QMainWindow):
         self.tableWidget = QTableWidget()
         main_layout.addWidget(self.tableWidget, stretch=1)
 
-        main_layout.setStretch(0, 0)
-        main_layout.setStretch(1, 1)
-
         self.statusbar = QStatusBar()
         self.setStatusBar(self.statusbar)
-        self.statusbar.showMessage("")
 
     def start(self):
         text = self.textEdit.toPlainText().strip()
-        self.films = []
+
         if text:
             try:
-                if '=' in text or '>' in text or '<' in text:
-                    operator = None
-                    for op in ['=', '>', '<']:
-                        if op in text:
-                            operator = op
-                            break
-                    if operator:
-                        field, value = text.split(operator, 1)
-                        if field not in ['id', 'title', 'year', 'genre', 'duration']:
-                            self.statusbar.showMessage("Некорректное поле в запросе")
-                            return
-                        if field in ['id', 'year', 'duration']:
-                            if value.isdigit():
-                                value = int(value)
-                        query = f"SELECT * FROM films WHERE {field} {operator} ?"
-                        params = (value,)
+                if "=" in text:
+                    p = text.split("=")
+                    f = p[0].strip()
+                    v = p[1].strip()
+                    if v.isdigit():
+                        query = f"SELECT * FROM films WHERE {f} = ?"
+                        params = (int(v),)
                     else:
-                        self.statusbar.showMessage("Некорректный запрос")
-                        return
+                        query = f"SELECT * FROM films WHERE {f} = ?"
+                        params = (v,)
+                elif ">" in text:
+                    p = text.split(">")
+                    f = p[0].strip()
+                    v = p[1].strip()
+                    if v.isdigit():
+                        query = f"SELECT * FROM films WHERE {f} > ?"
+                        params = (int(v),)
+                    else:
+                        query = f"SELECT * FROM films WHERE {f} > ?"
+                        params = (v,)
+                elif "<" in text:
+                    p = text.split("<")
+                    f = p[0].strip()
+                    v = p[1].strip()
+                    if v.isdigit():
+                        query = f"SELECT * FROM films WHERE {f} < ?"
+                        params = (int(v),)
+                    else:
+                        query = f"SELECT * FROM films WHERE {f} < ?"
+                        params = (v,)
                 elif text.isdigit():
                     query = "SELECT * FROM films WHERE id = ?"
                     params = (int(text),)
                 else:
                     query = "SELECT * FROM films WHERE title LIKE ?"
                     params = (f'%{text}%',)
+                
                 self.films = self.con.cursor().execute(query, params).fetchall()
             except Exception:
                 self.statusbar.showMessage("Некорректный запрос")
                 self.films = []
         else:
             self.films = self.con.cursor().execute("SELECT * FROM films").fetchall()
+
         self.tableWidget.clear()
+
         if not self.films:
             self.statusbar.showMessage("По этому запросу ничего не найдено")
             self.tableWidget.setRowCount(0)
@@ -95,31 +98,37 @@ class MyWidget(QMainWindow):
             self.statusbar.showMessage("")
             self.tableWidget.setColumnCount(len(self.films[0]))
             self.tableWidget.setRowCount(len(self.films))
-            for i, film in enumerate(self.films):
-                for j, item in enumerate(film):
-                    self.tableWidget.setItem(i, j, QTableWidgetItem(str(item)))
+
+            for i, obj1 in enumerate(self.films):
+                for j, obj2 in enumerate(obj1):
+                    self.tableWidget.setItem(i, j, QTableWidgetItem(str(obj2)))
 
     def edit(self):
-        selected_row = self.tableWidget.currentRow()
-        if not self.films or selected_row >= len(self.films):
+        sr = self.tableWidget.currentRow()
+        if not self.films or sr >= len(self.films):
             self.statusbar.showMessage("Нет данных для изменения")
             return
-        selected_film = self.films[selected_row]
-        film_id = selected_film[0]
-        reply = QMessageBox.question(self, "Подтверждение", f"Вы действительно хотите изменить фильм с id={film_id}?",
-                                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-        if reply == QMessageBox.StandardButton.Yes:
+        
+        sf = self.films[sr]
+        fi = sf[0]
+        r = QMessageBox.question(self, "Подтверждение", f"Вы действительно хотите изменить фильм с id={fi}?",
+                                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        if r == QMessageBox.StandardButton.Yes:
+            nt = sf[1][::-1]
+            ny = sf[2] + 1000
+            ng = sf[3]
+            nd = sf[4] * 2
             cur = self.con.cursor()
-            cur.execute(
-                "UPDATE films SET title = ?, year = ?, genre = ?, duration = ? WHERE id = ?",
-                (selected_film[1][::-1], selected_film[2] + 1000, selected_film[3], selected_film[4] * 2, film_id))
+            cur.execute("""UPDATE films SET title = ?, year = ?, genre = ?, duration = ? WHERE id = ?""",
+                        (nt, ny, ng, nd, fi))
             self.con.commit()
-            self.statusbar.showMessage(f"Фильм с id={film_id} успешно изменен")
+            cur.close()
+            self.statusbar.showMessage(f"Фильм с id={fi} успешно изменен")
             self.start()
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = MyWidget()
-    window.show()
+    ex = MyWidget()
+    ex.show()
     sys.exit(app.exec())

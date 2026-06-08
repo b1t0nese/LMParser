@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1 id="header">Пейзажи Марса!</h1>
+    <div id="carouselExampleControls" class="carousel slide" data-bs-ride="carousel" style="position: relative; width: 70vw; height: 70vh; left: 15vw; top: 5vw">
+        <div class="carousel-inner">
+            <div class="carousel-indicators">
+                <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 0"></button>
+                {% set i = {'i': 0} %}
+                {% for obj in dirs: %}
+                    {% if i.update({'i': i.i + 1}) %} {% endif %}
+                    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="{{i.i}}" aria-label="Slide {{i.i}}"></button>
+                {% endfor %}
+            </div>
+            <div class="carousel-item active">
+                <img src="static\img\carousel\1.webp" class="d-block w-100" style="height: 75vh;" alt="...">
+            </div>
+
+            {% for obj in dirs: %}
+                <div class="carousel-item">
+                    <img src="static/img/carousel/{{obj}}" class="d-block w-100" style="height: 75vh;" alt="...">
+                </div>
+            {% endfor %}
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleControls" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleControls" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+        </button>
+        <form method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="photo" style="font-size: 5vh;">Выберите файл</label>
+                <input type="file" class="form-control-file" id="photo" name="file">
+            </div>
+            <button type="submit" class="btn btn-primary" style="font-size: 3vh; padding: 2vh;">Отправить</button>
+        </form>
+    </div>
+{% endblock %}

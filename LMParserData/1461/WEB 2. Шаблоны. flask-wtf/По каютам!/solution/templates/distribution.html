@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2 id="header">
+        Размещение по каютам
+        <div style="position: relative; width: 250%; translate: -25%;">
+            {% for obj in members %}
+                {% if loop.index == 1 %}
+                    <h3>{{obj}} - Каюта №{{loop.index}} - капитан коробля </h3>
+                {% else %}
+                    <h3>{{obj}} - Каюта №{{loop.index}}</h3>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </h2>
+    
+{% endblock %}

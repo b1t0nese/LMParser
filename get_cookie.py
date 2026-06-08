@@ -18,7 +18,7 @@ if args.version_main:
 driver = Chrome(**driver_kwargs)
 driver.get(args.url)
 
-cookies_path = os.path.join(os.path.dirname(__file__), "cookies.pkl") if args.cookies_path is None else cookies_path = args.cookies_path
+cookies_path = args.cookies_path or os.path.join(os.path.dirname(__file__), "cookies.pkl")
 if not os.path.exists(cookies_path):
     print(f'Файл cookies по пути "{cookies_path}" не найден.')
     input("Пожалуйста, войдите в аккаунт и нажмите Enter: ")
